@@ -9,6 +9,6 @@ export async function GET() {
     );
   }
 
-  const token = btoa(`admin:${password}`);
+  const token = Buffer.from(`admin:${password}`).toString("base64");
   return NextResponse.json({ token: `Basic ${token}`, ok: true });
 }
