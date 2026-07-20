@@ -52,54 +52,31 @@ import { useKnowledgeList } from "@/app/_hooks/use-knowledge-list";
 const LS_KEY = "eve-model-config";
 const HEADER_MODEL_CONFIG = "x-eve-model-config";
 
-// ── Auth header cache (fetched once from server, not exposed in bundle) ──
-let cachedAuthHeader: string | null = null;
-
-// Fetch the auth header immediately at module load so it's cached before
-// the first eve request (which may fire before the fetch completes).
-const _authFetch = fetch("/api/auth/basic-token")
-  .then((res) => (res.ok ? res.json() : null))
-  .then((data) => {
-    cachedAuthHeader = data?.token ?? null;
-  })
-  .catch(() => {
-    cachedAuthHeader = null;
-  });
-
 /**
- * Read the user's model config from localStorage and return headers.
- * The auth token is fetched once at module load and cached thereafter.
+ * Read the user's model config from localStorage and return it as a
+ * serialised JSON header value. Auth is handled by middleware.ts at the
+ * edge layer, so no auth header is needed from the client.
  */
 function readModelConfigHeader(): Record<string, string> {
-  const headers: Record<string, string> = {};
-
-  if (cachedAuthHeader) {
-    headers["authorization"] = cachedAuthHeader;
-  }
-
-  // Attach model config from localStorage
   try {
     const raw = localStorage.getItem(LS_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      const modelHeader: Record<string, string> = {};
-      const fields = ["provider", "baseUrl", "model", "guardrailIdentifier", "guardrailVersion"] as const;
-      for (const key of fields) {
-        const val = parsed[key];
-        if (typeof val === "string" && val.length > 0) {
-          modelHeader[key] = val;
-        }
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    const header: Record<string, string> = {};
+    const fields = ["provider", "baseUrl", "model", "guardrailIdentifier", "guardrailVersion"] as const;
+    for (const key of fields) {
+      const val = parsed[key];
+      if (typeof val === "string" && val.length > 0) {
+        header[key] = val;
       }
-      if (typeof parsed.apiKey === "string" && parsed.apiKey.length > 0) {
-        modelHeader.apiKey = parsed.apiKey;
-      }
-      headers[HEADER_MODEL_CONFIG] = JSON.stringify(modelHeader);
     }
+    if (typeof parsed.apiKey === "string" && parsed.apiKey.length > 0) {
+      header.apiKey = parsed.apiKey;
+    }
+    return { [HEADER_MODEL_CONFIG]: JSON.stringify(header) };
   } catch {
-    // ignore
+    return {};
   }
-
-  return headers;
 }
 
 const AGENT_NAME = "eve-agent";
@@ -118,20 +95,10 @@ function useModelContextWindowTokens() {
   useEffect(() => {
     let cancelled = false;
     if (!contextWindowPromise) {
-      // Wait for the auth fetch to complete, then query /eve/v1/info
-      contextWindowPromise = _authFetch.then(async () => {
-        const headers: Record<string, string> = cachedAuthHeader
-          ? { authorization: cachedAuthHeader }
-          : {};
-        try {
-          const res = await fetch("/eve/v1/info", { headers });
-          if (!res.ok) return null;
-          const info = await res.json();
-          return info?.agent?.model?.contextWindowTokens ?? null;
-        } catch {
-          return null;
-        }
-      });
+      contextWindowPromise = fetch("/eve/v1/info")
+        .then((res) => (res.ok ? res.json() : null))
+        .then((info) => info?.agent?.model?.contextWindowTokens ?? null)
+        .catch(() => null);
     }
     contextWindowPromise.then((value) => {
       if (!cancelled) setContextWindowTokens(value);
