@@ -139,7 +139,7 @@ Vercel 的函数是**无状态 Serverless**，每次冷启动都是全新进程�
 export default defineAgent({
   model: buildModel(),
   modelContextWindowTokens: isLocalModel
-    ? Number(process.env.LOCAL_MODEL_CONTEXT_WINDOW ?? 32_768)
+    ? 32_768
     : 200_000,
   compaction: {
     thresholdPercent: 0.75,

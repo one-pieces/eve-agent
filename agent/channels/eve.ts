@@ -1,5 +1,5 @@
 import { defineChannel, GET, POST } from "eve/channels";
-import { routeAuth, localDev, placeholderAuth, vercelOidc } from "eve/channels/auth";
+import { httpBasic, routeAuth, localDev, vercelOidc } from "eve/channels/auth";
 import {
   modelContext,
   setPendingModelConfig,
@@ -18,7 +18,7 @@ const HEADER_MODEL_CONFIG = "x-eve-model-config";
 const authChain = [
   localDev(),
   vercelOidc(),
-  placeholderAuth(),
+  httpBasic({ username: "admin", password: process.env.ROUTE_AUTH_PASSWORD! }),
 ] as const;
 
 // ── Helpers ───────────────────────────────────────────────────────────
