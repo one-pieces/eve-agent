@@ -14,7 +14,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = Buffer.from(`admin:${password}`).toString("base64");
+  const token = btoa(`admin:${password}`);
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("authorization", `Basic ${token}`);
 
