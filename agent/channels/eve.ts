@@ -1,7 +1,10 @@
 import { defineChannel, GET, POST } from "eve/channels";
 import { routeAuth, localDev, placeholderAuth, vercelOidc } from "eve/channels/auth";
-import { modelContext } from "../../lib/model-context";
-import type { ModelConfig } from "../../lib/model-config";
+import {
+  modelContext,
+  setPendingModelConfig,
+} from "../../lib/model-context";
+import { readModelConfig, type ModelConfig } from "../../lib/model-config";
 
 // ── Constants matching the original eve channel ───────────────────────
 const SESSION_ID_HEADER = "x-eve-session-id";
@@ -117,7 +120,9 @@ export default defineChannel({
       };
 
       // 🎯 在 ALS 上下文中执行 send()，使模型解析时 readModelConfig() 能获取到该用户的配置
+      //    同时设置全局 fallback（生产构建中 workflow SDK 会丢失 ALS 上下文）
       if (modelConfig) {
+        setPendingModelConfig(modelConfig);
         return modelContext.run(modelConfig, doSend);
       }
       return doSend();
@@ -185,6 +190,7 @@ export default defineChannel({
       };
 
       if (modelConfig) {
+        setPendingModelConfig(modelConfig);
         return modelContext.run(modelConfig, doSend);
       }
       return doSend();
@@ -229,5 +235,53 @@ export default defineChannel({
         return Response.json({ error: "Session not found.", ok: false }, { status: 404 });
       }
     }),
+
+    // ── Health check ─────────────────────────────────────────────────
+    GET("/eve/v1/health", async () => {
+      return Response.json({ ok: true });
+    }),
+
+    // ── Debug: echo request headers ──────────────────────────────────
+    GET("/eve/v1/debug/headers", async (req) => {
+      const headers: Record<string, string> = {};
+      req.headers.forEach((value, key) => {
+        headers[key] = value;
+      });
+      return Response.json({
+        headers,
+        hasModelConfig: headers[HEADER_MODEL_CONFIG] !== undefined,
+        modelConfigRaw: headers[HEADER_MODEL_CONFIG] ?? null,
+      });
+    }),
+
+    // ── Agent info ───────────────────────────────────────────────────
+    GET("/eve/v1/info", async (req) => {
+      const authResult = await routeAuth(req, authChain);
+      if (authResult instanceof Response) return authResult;
+
+      const config = readModelConfig();
+
+      return Response.json({
+        agent: {
+          model: {
+            contextWindowTokens: getModelContextWindow(config.provider),
+            id: config.model || undefined,
+            provider: config.provider,
+          },
+        },
+      });
+    }),
   ],
 });
+
+function getModelContextWindow(provider: ModelConfig["provider"]): number {
+  switch (provider) {
+    case "bedrock":
+      return 200_000;
+    case "deepseek":
+      return 128_000;
+    case "LM Studio":
+    case "Ollama":
+      return 32_768;
+  }
+}

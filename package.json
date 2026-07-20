@@ -7,9 +7,9 @@
     "#evals/*": "./evals/*"
   },
   "scripts": {
-    "build": "next build",
+    "build": "next build && eve build",
     "dev": "next dev",
-    "start": "next start",
+    "start": "tsx scripts/prod-start.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "run:chromadb": "python3 -c \"import chromadb_rust_bindings; chromadb_rust_bindings.cli(['chroma','run','--path','./rag/data/chroma_data','--port','8000'])\"",
     "build:index": "TRANSFORMERS_OFFLINE=1 NODE_TLS_REJECT_UNAUTHORIZED=0 tsx rag/scripts/build_index.ts",
