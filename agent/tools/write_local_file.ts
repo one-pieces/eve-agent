@@ -94,7 +94,7 @@ export default defineTool({
     path: z.string().min(1),
     content: z.string(),
   }),
-  needsApproval: always(),
+  approval: always(),
   async execute({ path, content }) {
     let oldContent = "";
     let isNew = false;
