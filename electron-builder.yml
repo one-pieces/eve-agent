@@ -1,0 +1,57 @@
+appId: com.eve.agent
+productName: Eve Agent
+copyright: Copyright © 2024
+
+directories:
+  output: dist/electron
+  buildResources: build
+
+# Files included in the Electron app bundle (main + preload scripts)
+files:
+  - electron-dist/**/*
+  - package.json
+  - "!**/.git/**"
+  - "!**/node_modules/**"
+
+# Server-side app resources bundled alongside the app
+extraResources:
+  - from: .next
+    to: app/.next
+  - from: .eve
+    to: app/.eve
+  - from: agent
+    to: app/agent
+  - from: lib
+    to: app/lib
+  - from: node_modules
+    to: app/node_modules
+    filter:
+      - "**/*"
+      - "!**/.cache/**"
+      - "!**/test/**"
+      - "!**/tests/**"
+      - "!**/__tests__/**"
+  - from: package.json
+    to: app/package.json
+
+# Keep native modules unpackaged from ASAR so they can load .node binaries
+asarUnpack:
+  - "electron-dist/**/*"
+
+mac:
+  category: public.app-category.developer-tools
+  darkModeSupport: true
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+
+dmg:
+  title: "${productName} ${version}"
+  window:
+    width: 540
+    height: 380
+
+# Rebuild native modules for the Electron Node.js version
+npmRebuild: true

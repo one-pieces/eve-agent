@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppNavbar } from "@/app/_components/app-navbar";
+import { ElectronTopBar } from "@/app/_components/electron-topbar";
 import { LanguageProvider } from "@/app/_context/language-context";
 import { cn } from "@/lib/utils";
 import "./globals.css";
@@ -36,9 +37,12 @@ export default function RootLayout({
       <body>
         <LanguageProvider>
           <TooltipProvider>
-            <div className="flex h-dvh overflow-hidden">
-              <AppNavbar />
-              <div className="flex-1 overflow-hidden">{children}</div>
+            <div className="flex h-dvh flex-col overflow-hidden">
+              <ElectronTopBar />
+              <div className="flex flex-1 min-h-0 overflow-hidden">
+                <AppNavbar />
+                <div className="flex-1 overflow-hidden">{children}</div>
+              </div>
             </div>
           </TooltipProvider>
         </LanguageProvider>

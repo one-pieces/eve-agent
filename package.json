@@ -2,6 +2,7 @@
   "name": "eve-agent",
   "version": "0.0.0",
   "type": "module",
+  "main": "electron-dist/main.js",
   "imports": {
     "#*": "./agent/*",
     "#evals/*": "./evals/*"
@@ -10,6 +11,9 @@
     "build": "next build && eve build",
     "dev": "next dev",
     "start": "tsx scripts/prod-start.ts",
+    "electron:compile": "tsc -p tsconfig.electron.json",
+    "electron:dev": "npm run electron:compile && concurrently -k -n next,electron -c blue,green \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron:dist": "npm run build && npm run electron:compile && electron-builder --mac",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "run:chromadb": "python3 -c \"import chromadb_rust_bindings; chromadb_rust_bindings.cli(['chroma','run','--path','./rag/data/chroma_data','--port','8000'])\"",
     "build:index": "TRANSFORMERS_OFFLINE=1 NODE_TLS_REJECT_UNAUTHORIZED=0 tsx rag/scripts/build_index.ts",
@@ -57,8 +61,12 @@
     "@types/node": "24.x",
     "@types/react": "19.2.15",
     "@types/react-dom": "19.2.3",
+    "concurrently": "^9.0.0",
+    "electron": "^36.0.0",
+    "electron-builder": "^25.0.0",
     "tsx": "^4.22.4",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "wait-on": "^8.0.0"
   },
   "overrides": {
     "ai": "7.0.0-beta.178"
@@ -68,5 +76,14 @@
   },
   "engines": {
     "node": "24.x"
+  },
+  "allowScripts": {
+    "@zvec/zvec@0.5.0": true,
+    "esbuild@0.28.1": true,
+    "electron": true,
+    "fsevents@2.3.3": true,
+    "onnxruntime-node@1.24.3": true,
+    "protobufjs@7.6.5": true,
+    "sharp@0.34.5": true
   }
 }

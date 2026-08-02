@@ -63,7 +63,7 @@ function buildModel(config: ModelConfig) {
       fetch: loggingFetch,
       headers: {
         "x-portkey-api-key": apiKey!,
-        "x-portkey-provider": "bedrock",
+        "x-portkey-provider": "@dev-claude-code",
         "x-portkey-forward-headers":
           "X-Amzn-Bedrock-GuardrailIdentifier,X-Amzn-Bedrock-GuardrailVersion",
         "X-Amzn-Bedrock-GuardrailIdentifier": guardrailIdentifier!,
